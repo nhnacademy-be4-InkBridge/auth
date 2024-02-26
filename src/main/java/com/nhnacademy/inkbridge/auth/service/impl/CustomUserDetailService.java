@@ -37,7 +37,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
             MemberLoginResponseDto responseDto = response.getBody();
 
-            return new User(Objects.requireNonNull(responseDto).getMemberId().toString(), responseDto.getPassword(),
+            return new User(Objects.requireNonNull(responseDto).getEmail(), responseDto.getPassword(),
                     getAuthorities(responseDto));
 
         } catch (Exception e) {

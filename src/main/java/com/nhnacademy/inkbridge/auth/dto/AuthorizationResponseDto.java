@@ -5,15 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * class: MemberLoginResponseDto.
+ * class: AuthorizationResponseDto.
  *
  * @author devminseo
- * @version 2/22/24
+ * @version 2/26/24
  */
 @Getter
 @AllArgsConstructor
-public class MemberLoginResponseDto {
+public class AuthorizationResponseDto {
     private String email;
-    private String password;
-    private List<String> role;
+    private List<String> roles;
 }

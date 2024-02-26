@@ -4,6 +4,7 @@ import com.nhnacademy.inkbridge.auth.config.MetaDataProperties;
 import com.nhnacademy.inkbridge.auth.dto.MemberLoginRequestDto;
 import com.nhnacademy.inkbridge.auth.dto.MemberLoginResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -31,10 +32,10 @@ public class MemberLoginAdaptor {
      */
     public ResponseEntity<MemberLoginResponseDto> login(MemberLoginRequestDto requestDto) {
         return restTemplate.exchange(
-                metaDataProperties.getGateway() +"/api/login",
+                metaDataProperties.getGateway() + "/api/login",
                 HttpMethod.POST,
                 new HttpEntity<>(requestDto, createHttpHeaders()),
-                MemberLoginResponseDto.class
+                new ParameterizedTypeReference<>() {}
         );
     }
 

@@ -5,6 +5,7 @@ import com.nhnacademy.inkbridge.auth.dto.ClientLoginRequestDto;
 import com.nhnacademy.inkbridge.auth.exception.ClientLoginException;
 import com.nhnacademy.inkbridge.auth.exception.ClientNotFoundException;
 import com.nhnacademy.inkbridge.auth.util.Errors;
+import com.nhnacademy.inkbridge.auth.util.JWTEnums;
 import com.nhnacademy.inkbridge.auth.util.JwtUtil;
 import java.io.IOException;
 import java.util.Collection;
@@ -25,7 +26,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
  * class: CustomAuthenticationFilter.
@@ -36,17 +36,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Slf4j
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
-    private static final AntPathRequestMatcher LOGIN_REQUEST_MATHCER = new AntPathRequestMatcher("/auth/login", "POST");
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String AUTHORIZATION_HEADER="Authorization";
     private static final String BEARER_PREFIX = "Bearer";
-    private static final String ACCESS_TOKEN = "access_token";
-    private static final String REFRESH_TOKEN = "refresh_token";
-    private static final String EMAIL_ID = "email_id";
-    private static final String PRINCIPAL = "principal";
-    private static final String HEADER_UUID = "header_uuid";
-    private static final String HEADER_EXPIRED_TIME = "header_expired_time";
 
 
     public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
@@ -107,14 +100,14 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String refreshToken = jwtUtil.createRefreshToken(email, authorities);
         Date expiredTime = jwtUtil.getExpiredTime(accessToken);
 
-        redisTemplate.opsForHash().put(emailUuid,ACCESS_TOKEN,accessToken);
-        redisTemplate.opsForHash().put(emailUuid,REFRESH_TOKEN,refreshToken);
-        redisTemplate.opsForHash().put(emailUuid,EMAIL_ID,email);
-        redisTemplate.opsForHash().put(emailUuid,PRINCIPAL,authResult.getAuthorities().toString());
+        redisTemplate.opsForHash().put(emailUuid, JWTEnums.ACCESS_TOKEN.getName(),accessToken);
+        redisTemplate.opsForHash().put(emailUuid,JWTEnums.REFRESH_TOKEN.getName(),refreshToken);
+        redisTemplate.opsForHash().put(emailUuid,JWTEnums.EMAIL_ID.getName(),email);
+        redisTemplate.opsForHash().put(emailUuid,JWTEnums.PRINCIPAL.getName(),authResult.getAuthorities().toString());
 
         response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken);
-        response.addHeader(HEADER_UUID,emailUuid);
-        response.addHeader(HEADER_EXPIRED_TIME, String.valueOf(expiredTime));
+        response.addHeader(JWTEnums.HEADER_UUID.getName(), emailUuid);
+        response.addHeader(JWTEnums.HEADER_EXPIRED_TIME.getName(), String.valueOf(expiredTime));
 
     }
 

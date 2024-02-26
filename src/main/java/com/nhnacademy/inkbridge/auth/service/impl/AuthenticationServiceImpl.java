@@ -22,7 +22,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     @Override
     public String getId(String uuid) {
-        return Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.UUID.name())).toString();
+        return Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.EMAIL_ID.getName())).toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @param uuid 회원 식별 아이디
+     */
+    @Override
+    public String getRoles(String uuid) {
+        return Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.PRINCIPAL.getName())).toString();
     }
 
     /**
@@ -32,8 +41,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     @Override
     public void doReissue(String uuid, String accessToken) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.name());
-        redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.name(), accessToken);
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
+        redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.getName(), accessToken);
     }
 
     /**
@@ -42,8 +51,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     @Override
     public void doLogout(String uuid) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.name());
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.name());
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.UUID.name());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.EMAIL_ID.getName());
     }
 }

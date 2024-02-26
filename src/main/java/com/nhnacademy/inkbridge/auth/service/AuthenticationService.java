@@ -16,6 +16,13 @@ public interface AuthenticationService {
     String getId(String uuid);
 
     /**
+     * 레디스에서 회원 권한을 가져옵니다.
+     * @param uuid 회원 식별 아이디
+     * @return 권한
+     */
+    String getRoles(String uuid);
+
+    /**
      * uuid 를 받아 accessToken 재발급
      * @param uuid 회원 식별 고유 아이디
      * @param accessToken accessToken
