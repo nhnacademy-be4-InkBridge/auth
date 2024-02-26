@@ -54,5 +54,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.EMAIL_ID.getName());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.PRINCIPAL.getName());
     }
 }

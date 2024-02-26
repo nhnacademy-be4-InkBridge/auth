@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.inkbridge.auth.dto.ClientLoginRequestDto;
 import com.nhnacademy.inkbridge.auth.exception.ClientLoginException;
 import com.nhnacademy.inkbridge.auth.exception.ClientNotFoundException;
+import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
 import com.nhnacademy.inkbridge.auth.util.Errors;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
 import com.nhnacademy.inkbridge.auth.util.JwtUtil;
@@ -18,9 +19,9 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -34,20 +35,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * @version 2/25/24
  */
 @Slf4j
+@RequiredArgsConstructor
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    private final AuthenticationManager authenticationManager;
+    private final CustomAuthenticationProvider provider;
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String AUTHORIZATION_HEADER="Authorization";
     private static final String BEARER_PREFIX = "Bearer";
-
-
-    public CustomAuthenticationFilter(AuthenticationManager authenticationManager, JwtUtil jwtUtil,
-                                      RedisTemplate<String, Object> redisTemplate) {
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.redisTemplate = redisTemplate;
-    }
 
     /**
      * front 에서 넘어온 회원정보로 authentication 만들어 넘겨줌.
@@ -77,7 +71,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(email, password);
 
-        return authenticationManager.authenticate(authenticationToken);
+        return provider.authenticate(authenticationToken);
     }
 
     @Override
@@ -92,7 +86,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         List<String> authorities = getAuthorities(authResult.getAuthorities());
 
         log.debug("email -> {}", email);
-        log.debug("authorites -> {}", authorities);
+        log.debug("authorities -> {}", authorities);
 
         String emailUuid = UUID.randomUUID().toString();
 

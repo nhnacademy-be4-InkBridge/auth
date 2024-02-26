@@ -26,7 +26,7 @@ public class RestTemplateConfig {
 
         factory.setConnectTimeout(3000);
         factory.setBufferRequestBody(false);
-        factory.setReadTimeout(10000);
+        factory.setReadTimeout(100000);
         return factory;
     }
 }

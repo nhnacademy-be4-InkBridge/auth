@@ -24,13 +24,13 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
 @EnableRedisHttpSession(redisNamespace = "redis:session")
 @Configuration
 public class RedisConfig implements BeanClassLoaderAware {
-    @Value("inkbridge.redis.host")
+    @Value("${inkbridge.redis.host}")
     private String host;
-    @Value("inkbridge.redis.port")
+    @Value("${inkbridge.redis.port}")
     private String port;
-    @Value("inkbridge.redis.password")
+    @Value("${inkbridge.redis.password}")
     private String password;
-    @Value("inkbridge.redis.database")
+    @Value("${inkbridge.redis.database}")
     private String database;
     private ClassLoader classLoader;
 
