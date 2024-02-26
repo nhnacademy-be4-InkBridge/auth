@@ -1,7 +1,7 @@
 package com.nhnacademy.inkbridge.auth.config;
 
 import com.nhnacademy.inkbridge.auth.filter.CustomAuthenticationFilter;
-import com.nhnacademy.inkbridge.auth.jwt.JwtFailHandler;
+import com.nhnacademy.inkbridge.auth.handler.JwtFailHandler;
 import com.nhnacademy.inkbridge.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

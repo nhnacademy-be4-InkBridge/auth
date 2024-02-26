@@ -27,7 +27,7 @@ public interface AuthenticationService {
      * @param uuid 회원 식별 고유 아이디
      * @param accessToken accessToken
      */
-    void doReissue(String uuid,String accessToken);
+    void reissue(String uuid,String accessToken);
 
-    void doLogout(String uuid);
+    void logout(String uuid);
 }

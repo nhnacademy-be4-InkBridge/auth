@@ -9,7 +9,6 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,12 +33,12 @@ public class JwtUtil {
     private Key key;
 
     @Value("${inkbridge.jwt.secret.key}")
-    String secret;
+    String secretKey;
 
-    @PostConstruct
-    private void init() {
-        byte[] byteSecretKey = Decoders.BASE64.decode(secret);
-        key = Keys.hmacShaKeyFor(byteSecretKey);
+    private Key key() {
+        byte[] byteSecretKey = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(byteSecretKey);
+
     }
 
     /**
@@ -49,22 +48,22 @@ public class JwtUtil {
      * @return 토큰의 회원 식별 아이디
      */
     public String getId(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody()
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody()
                 .get("UUID", String.class);
     }
 
     public String getRole(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody()
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody()
                 .get("ROLE", String.class);
     }
 
     public Boolean isExpired(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration()
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().getExpiration()
                 .before(new Date());
     }
 
     public Date getExpiredTime(String token){
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration();
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().getExpiration();
     }
 
 
@@ -76,7 +75,7 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiredMs))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -90,7 +89,7 @@ public class JwtUtil {
 
     public Boolean isValidJwt(String token) {
         try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token);
             return !claimsJws.getBody().getExpiration().before(new Date());
         } catch (Exception e) {
             return false;

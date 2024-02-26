@@ -1,4 +1,4 @@
-package com.nhnacademy.inkbridge.auth.jwt;
+package com.nhnacademy.inkbridge.auth.handler;
 
 import com.nhnacademy.inkbridge.auth.config.MetaDataProperties;
 import java.io.IOException;

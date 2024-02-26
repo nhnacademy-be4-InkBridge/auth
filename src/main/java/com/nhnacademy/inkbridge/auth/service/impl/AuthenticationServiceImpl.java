@@ -40,7 +40,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @param accessToken accessToken
      */
     @Override
-    public void doReissue(String uuid, String accessToken) {
+    public void reissue(String uuid, String accessToken) {
         redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
         redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.getName(), accessToken);
     }
@@ -50,7 +50,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @param uuid
      */
     @Override
-    public void doLogout(String uuid) {
+    public void logout(String uuid) {
         redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.EMAIL_ID.getName());

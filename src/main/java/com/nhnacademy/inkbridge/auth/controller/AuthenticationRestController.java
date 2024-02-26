@@ -61,7 +61,7 @@ public class AuthenticationRestController {
         List<String> roles = getRoles(role);
 
         String newAccessToken = jwtUtil.reissueToken(email, roles);
-        authenticationService.doReissue(uuid, newAccessToken);
+        authenticationService.reissue(uuid, newAccessToken);
 
         long expiredTime = jwtUtil.getExpiredTime(newAccessToken).getTime();
 
