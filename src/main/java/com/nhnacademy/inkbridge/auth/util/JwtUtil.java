@@ -9,6 +9,8 @@ import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
 import java.util.List;
+import javax.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,14 +26,18 @@ import org.springframework.stereotype.Component;
  * @version 2/23/24
  */
 @Component
+@RequiredArgsConstructor
 public class JwtUtil {
     private static final long ACCESS_TOKEN_EXPIRED_TIME = 1000L * 60 * 60;
     private static final long REFRESH_TOKEN_EXPIRED_TIME = 1000L * 60L * 60L * 24L * 7;
     private final UserDetailsService userDetailsService;
     private Key key;
 
-    public JwtUtil(@Value("${inkbridge.jwt.secret.key}") String secret, UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
+    @Value("${inkbridge.jwt.secret.key}")
+    String secret;
+
+    @PostConstruct
+    private void init() {
         byte[] byteSecretKey = Decoders.BASE64.decode(secret);
         key = Keys.hmacShaKeyFor(byteSecretKey);
     }
@@ -43,7 +49,8 @@ public class JwtUtil {
      * @return 토큰의 회원 식별 아이디
      */
     public String getId(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().get("UUID", String.class);
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody()
+                .get("UUID", String.class);
     }
 
     public String getRole(String token) {
@@ -54,6 +61,10 @@ public class JwtUtil {
     public Boolean isExpired(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration()
                 .before(new Date());
+    }
+
+    public Date getExpiredTime(String token){
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody().getExpiration();
     }
 
 
@@ -86,8 +97,8 @@ public class JwtUtil {
         }
     }
 
-    public String reissueToken(String id,List<String> role) {
-        return createAccessToken(id,role);
+    public String reissueToken(String id, List<String> role) {
+        return createAccessToken(id, role);
     }
 
     public Authentication getAuthentication(String token) {
