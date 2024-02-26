@@ -1,14 +1,22 @@
 package com.nhnacademy.inkbridge.auth.config;
 
+import com.nhnacademy.inkbridge.auth.filter.CustomAuthenticationFilter;
+import com.nhnacademy.inkbridge.auth.jwt.JwtFailHandler;
+import com.nhnacademy.inkbridge.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * class: SecurityConfig.
@@ -20,6 +28,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final RestTemplate restTemplate;
+    private final MetaDataProperties metaDataProperties;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,8 +46,19 @@ public class SecurityConfig {
         http
                 .httpBasic().disable();
         http
+                .addFilter(customAuthenticationFilter());
+        http
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         return http.build();
+    }
+
+    private CustomAuthenticationFilter customAuthenticationFilter() throws Exception {
+        CustomAuthenticationFilter customAuthenticationFilter =
+                new CustomAuthenticationFilter(authenticationManager(null),
+                        jwtUtil, redisTemplate);
+        customAuthenticationFilter.setAuthenticationFailureHandler(failureHandler());
+        customAuthenticationFilter.setFilterProcessesUrl("/auth/login");
+        return customAuthenticationFilter;
     }
 
     /**
@@ -46,6 +69,16 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    public AuthenticationFailureHandler failureHandler() {
+        return new JwtFailHandler(metaDataProperties);
     }
 
 

@@ -1,5 +1,6 @@
 package com.nhnacademy.inkbridge.auth.dto;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,5 +16,5 @@ public class MemberLoginResponseDto {
     private Long memberId;
     private String email;
     private String password;
-    private Integer memberAuthId;
+    private List<String> role;
 }
