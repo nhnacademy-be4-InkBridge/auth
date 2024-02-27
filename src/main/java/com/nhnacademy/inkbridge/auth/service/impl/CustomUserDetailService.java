@@ -37,11 +37,11 @@ public class CustomUserDetailService implements UserDetailsService {
 
             MemberLoginResponseDto responseDto = response.getBody();
 
-            return new User(Objects.requireNonNull(responseDto).getEmail(), responseDto.getPassword(),
+            return new User(Objects.requireNonNull(responseDto).getMemberId().toString(), responseDto.getPassword(),
                     getAuthorities(responseDto));
 
         } catch (Exception e) {
-            throw new NotFoundUserException("잉크 브릿지의 회원이 아닙니다.");
+            throw new NotFoundUserException();
         }
     }
 

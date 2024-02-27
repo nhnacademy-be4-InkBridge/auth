@@ -1,13 +1,13 @@
 package com.nhnacademy.inkbridge.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nhnacademy.inkbridge.auth.dto.ClientLoginRequestDto;
-import com.nhnacademy.inkbridge.auth.exception.ClientLoginException;
+import com.nhnacademy.inkbridge.auth.dto.AuthorizationRequestDto;
 import com.nhnacademy.inkbridge.auth.exception.ClientNotFoundException;
+import com.nhnacademy.inkbridge.auth.exception.NotFoundUserException;
 import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
+import com.nhnacademy.inkbridge.auth.provider.JwtProvider;
 import com.nhnacademy.inkbridge.auth.util.Errors;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
-import com.nhnacademy.inkbridge.auth.util.JwtUtil;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
@@ -38,13 +38,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final CustomAuthenticationProvider provider;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtProvider;
+    private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final String AUTHORIZATION_HEADER="Authorization";
-    private static final String BEARER_PREFIX = "Bearer";
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     /**
      * front 에서 넘어온 회원정보로 authentication 만들어 넘겨줌.
+     *
      * @param request 넘어온 회원 정보
      * @return 넘겨주는 회원정보
      * @throws AuthenticationException 잘못된 형식의 회원정보가 넘어왔을경우
@@ -53,20 +55,19 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
         log.debug("front 로부터 회원정보 받음 -> auth server start");
-        ObjectMapper objectMapper = new ObjectMapper();
+        AuthorizationRequestDto authorizationResponseDto;
 
-        ClientLoginRequestDto clientLoginRequestDto;
-
-        try{
-            clientLoginRequestDto = objectMapper.readValue(request.getInputStream(), ClientLoginRequestDto.class);
-            log.debug("Attempt authentication email -> {}",clientLoginRequestDto.getEmail());
-            log.debug("Attempt authentication password -> {}",clientLoginRequestDto.getPassword());
+        try {
+            authorizationResponseDto = objectMapper.readValue(request.getInputStream(), AuthorizationRequestDto.class);
         } catch (IOException e) {
-            throw new ClientLoginException("Invalid login request");
+            throw new NotFoundUserException();
         }
 
-        String email = clientLoginRequestDto.getEmail();
-        String password = clientLoginRequestDto.getPassword();
+        String email = authorizationResponseDto.getEmail();
+        String password = authorizationResponseDto.getPassword();
+
+        log.debug("Attempt authentication email -> {}", email);
+        log.debug("Attempt authentication password -> {}", password);
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(email, password);
@@ -82,27 +83,25 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         if (Objects.isNull(authResult)) {
             throw new ClientNotFoundException(Errors.MEMBER_NOT_FOUND);
         }
-        String email = authResult.getName();
+        String memberId = (String) authResult.getPrincipal();
         List<String> authorities = getAuthorities(authResult.getAuthorities());
 
-        log.debug("email -> {}", email);
-        log.debug("authorities -> {}", authorities);
+        log.debug("email -> {}", memberId);
+        log.debug("authorities -> {}", authorities.toString());
 
-        String emailUuid = UUID.randomUUID().toString();
+        String uuid = UUID.randomUUID().toString();
 
-        String accessToken = jwtUtil.createAccessToken(email,authorities);
-        String refreshToken = jwtUtil.createRefreshToken(email, authorities);
-        Date expiredTime = jwtUtil.getExpiredTime(accessToken);
+        String accessToken = jwtProvider.createAccessToken(uuid, authorities);
+        String refreshToken = jwtProvider.createRefreshToken(uuid, authorities);
+        Date expiredTime = jwtProvider.getExpiredTime(accessToken);
 
-        redisTemplate.opsForHash().put(emailUuid, JWTEnums.ACCESS_TOKEN.getName(),accessToken);
-        redisTemplate.opsForHash().put(emailUuid,JWTEnums.REFRESH_TOKEN.getName(),refreshToken);
-        redisTemplate.opsForHash().put(emailUuid,JWTEnums.EMAIL_ID.getName(),email);
-        redisTemplate.opsForHash().put(emailUuid,JWTEnums.PRINCIPAL.getName(),authResult.getAuthorities().toString());
+        redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.getName(), accessToken);
+        redisTemplate.opsForHash().put(uuid, JWTEnums.REFRESH_TOKEN.getName(), refreshToken);
+        redisTemplate.opsForHash().put(uuid, JWTEnums.MEMBER_ID.getName(), memberId);
+
 
         response.addHeader(AUTHORIZATION_HEADER, BEARER_PREFIX + accessToken);
-        response.addHeader(JWTEnums.HEADER_UUID.getName(), emailUuid);
         response.addHeader(JWTEnums.HEADER_EXPIRED_TIME.getName(), String.valueOf(expiredTime));
-
     }
 
     @Override

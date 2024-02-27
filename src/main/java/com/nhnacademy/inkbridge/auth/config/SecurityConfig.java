@@ -1,10 +1,11 @@
 package com.nhnacademy.inkbridge.auth.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.inkbridge.auth.filter.CustomAuthenticationFilter;
 import com.nhnacademy.inkbridge.auth.handler.JwtFailHandler;
 import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
+import com.nhnacademy.inkbridge.auth.provider.JwtProvider;
 import com.nhnacademy.inkbridge.auth.service.impl.CustomUserDetailService;
-import com.nhnacademy.inkbridge.auth.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +31,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final RedisTemplate<String, Object> redisTemplate;
     private final MetaDataProperties metaDataProperties;
     private final CustomUserDetailService customUserDetailService;
+    private final ObjectMapper objectMapper;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,9 +56,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CustomAuthenticationFilter customAuthenticationFilter(JwtUtil jwtUtil) throws Exception {
+    public CustomAuthenticationFilter customAuthenticationFilter(JwtProvider jwtProvider) throws Exception {
         CustomAuthenticationFilter customAuthenticationFilter =
-                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtUtil, redisTemplate);
+                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtProvider, objectMapper,redisTemplate);
         customAuthenticationFilter.setAuthenticationFailureHandler(failureHandler());
         customAuthenticationFilter.setAuthenticationManager(authenticationManager(null));
         customAuthenticationFilter.setFilterProcessesUrl("/auth/login");

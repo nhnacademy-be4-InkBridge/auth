@@ -1,4 +1,4 @@
-package com.nhnacademy.inkbridge.auth.util;
+package com.nhnacademy.inkbridge.auth.provider;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -11,9 +11,6 @@ import java.util.Date;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +23,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class JwtUtil {
+public class JwtProvider {
     private static final long ACCESS_TOKEN_EXPIRED_TIME = 1000L * 60 * 60;
     private static final long REFRESH_TOKEN_EXPIRED_TIME = 1000L * 60L * 60L * 24L * 7;
     private final UserDetailsService userDetailsService;
@@ -41,28 +38,8 @@ public class JwtUtil {
 
     }
 
-    /**
-     * 회원 식별 아이디
-     *
-     * @param token 사용자 토큰
-     * @return 토큰의 회원 식별 아이디
-     */
-    public String getId(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody()
-                .get("UUID", String.class);
-    }
 
-    public String getRole(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody()
-                .get("ROLE", String.class);
-    }
-
-    public Boolean isExpired(String token) {
-        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().getExpiration()
-                .before(new Date());
-    }
-
-    public Date getExpiredTime(String token){
+    public Date getExpiredTime(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().getExpiration();
     }
 
@@ -70,7 +47,7 @@ public class JwtUtil {
     public String createJwt(String id, List<String> role, Long expiredMs) {
         Claims claims = Jwts.claims();
         claims.put("UUID", id);
-        claims.put("ROLE", role);
+        claims.put("ROLE", role.toString());
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
@@ -96,16 +73,21 @@ public class JwtUtil {
         }
     }
 
-    public String reissueToken(String id, List<String> role) {
-        return createAccessToken(id, role);
+    public String reissueToken(Claims claims) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRED_TIME))
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getId(token));
-        return new UsernamePasswordAuthenticationToken(
-                userDetails,
-                "",
-                userDetails.getAuthorities()
-        );
+    public Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
+
 }

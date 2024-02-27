@@ -2,18 +2,18 @@ package com.nhnacademy.inkbridge.auth.controller;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
+import com.nhnacademy.inkbridge.auth.provider.JwtProvider;
 import com.nhnacademy.inkbridge.auth.service.AuthenticationService;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
-import com.nhnacademy.inkbridge.auth.util.JwtUtil;
-import java.util.Arrays;
+import io.jsonwebtoken.Claims;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-public class AuthenticationRestController {
-    private final JwtUtil jwtUtil;
+public class JwtRestController {
+    private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final AuthenticationService authenticationService;
 
@@ -55,31 +55,18 @@ public class AuthenticationRestController {
         if (isValidRefreshToken(uuid)) {
             return ResponseEntity.badRequest().body("refresh token 만료");
         }
-        String email = authenticationService.getId(uuid);
-        String role = authenticationService.getRoles(uuid);
 
-        List<String> roles = getRoles(role);
+        Claims claims = jwtProvider.getClaims(accessToken);
+        String newAccessToken = jwtProvider.reissueToken(claims);
 
-        String newAccessToken = jwtUtil.reissueToken(email, roles);
-        authenticationService.reissue(uuid, newAccessToken);
+        authenticationService.reissueToken(uuid, newAccessToken);
 
-        long expiredTime = jwtUtil.getExpiredTime(newAccessToken).getTime();
+        long expiredTime = jwtProvider.getExpiredTime(newAccessToken).getTime();
 
-        response.addHeader(AUTHORIZATION, "Bearer" + newAccessToken);
-        response.addHeader(JWTEnums.HEADER_UUID.getName(), uuid);
-        response.addHeader(JWTEnums.HEADER_EXPIRED_TIME.getName(), String.valueOf(expiredTime));
+        response.setHeader(AUTHORIZATION, "Bearer" + newAccessToken);
+        response.setHeader(JWTEnums.HEADER_EXPIRED_TIME.getName(), String.valueOf(expiredTime));
 
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 레디스의 회원 권한 리스트로 반환
-     *
-     * @param role 레디스에서 가져온 권한들
-     * @return 리스트로 변환한 권한
-     */
-    private List<String> getRoles(String role) {
-        return Arrays.asList(role.replaceAll("[\\[\\]]", "").split(","));
     }
 
     /**
@@ -102,7 +89,7 @@ public class AuthenticationRestController {
         String refreshToken =
                 Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.REFRESH_TOKEN.getName()))
                         .toString();
-        long expiredTime = jwtUtil.getExpiredTime(refreshToken).getTime();
+        long expiredTime = jwtProvider.getExpiredTime(refreshToken).getTime();
         long now = new Date().getTime();
 
         return (expiredTime - (now / 1000)) > 0;
@@ -110,7 +97,16 @@ public class AuthenticationRestController {
 
     private boolean isValidHeaders(String accessToken, String uuid) {
         return Objects.isNull(accessToken) || Objects.isNull(uuid) || !accessToken.startsWith("Bearer") ||
-                !jwtUtil.isValidJwt(accessToken.substring(7));
+                !jwtProvider.isValidJwt(accessToken.substring(7));
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        String uuid = request.getHeader(JWTEnums.HEADER_UUID.getName());
+
+        authenticationService.logout(uuid);
+
+        return ResponseEntity.ok().build();
     }
 
 }

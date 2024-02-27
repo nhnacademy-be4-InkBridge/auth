@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * class: TokenReissuResponse.
+ * class: AuthorizationResponseDto.
  *
  * @author devminseo
- * @version 2/23/24
+ * @version 2/26/24
  */
 @Getter
 @AllArgsConstructor
-public class TokenReissuResponse {
-    private String accessToken;
-    private String refreshToken;
+public class AuthorizationRequestDto {
+    private String email;
+    private String password;
 }

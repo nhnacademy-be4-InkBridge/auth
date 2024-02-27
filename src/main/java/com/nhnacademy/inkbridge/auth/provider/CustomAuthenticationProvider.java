@@ -18,8 +18,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        String email = authentication.getName();
-        String password = authentication.getCredentials().toString();
+        String email = (String) authentication.getPrincipal();
+        String password = (String) authentication.getCredentials();
 
         UserDetails user = this.getUserDetailsService().loadUserByUsername(email);
 

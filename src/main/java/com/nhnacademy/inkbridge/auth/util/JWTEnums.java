@@ -14,9 +14,9 @@ import lombok.Getter;
 public enum JWTEnums {
     ACCESS_TOKEN("access_token"),
     REFRESH_TOKEN("refresh_token"),
-    EMAIL_ID("email_id"),
+    MEMBER_ID("member_id"),
     HEADER_UUID("header_uuid"),
-    HEADER_EXPIRED_TIME("header_expired_time"),
-    PRINCIPAL("principal");
+    HEADER_AUTH("Authorization"),
+    HEADER_EXPIRED_TIME("header_expired_time");
     private final String name;
 }
