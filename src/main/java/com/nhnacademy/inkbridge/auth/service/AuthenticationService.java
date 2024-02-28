@@ -9,12 +9,5 @@ package com.nhnacademy.inkbridge.auth.service;
  */
 public interface AuthenticationService {
 
-    /**
-     * uuid 를 받아 accessToken 재발급
-     * @param uuid 회원 식별 고유 아이디
-     * @param accessToken accessToken
-     */
-    void reissueToken(String uuid,String accessToken);
-
     void logout(String token);
 }

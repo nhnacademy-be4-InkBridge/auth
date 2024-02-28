@@ -1,7 +1,8 @@
-package com.nhnacademy.inkbridge.auth.dto;
+package com.nhnacademy.inkbridge.auth.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * class: AuthorizationResponseDto.
@@ -10,6 +11,7 @@ import lombok.Getter;
  * @version 2/26/24
  */
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class AuthorizationRequestDto {
     private String email;

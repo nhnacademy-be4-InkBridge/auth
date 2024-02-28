@@ -42,6 +42,9 @@ public class JwtProvider {
     public Date getExpiredTime(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().getExpiration();
     }
+    public String getUUID(String token) {
+        return Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token).getBody().get("UUID",String.class);
+    }
 
 
     public String createJwt(String id, List<String> role, Long expiredMs) {
@@ -73,7 +76,7 @@ public class JwtProvider {
         }
     }
 
-    public String reissueToken(Claims claims) {
+    public String reissueAccessToken(Claims claims) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))

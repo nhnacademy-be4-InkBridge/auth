@@ -16,15 +16,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final RedisTemplate<String, Object> redisTemplate;
-    @Override
-    public void reissueToken(String uuid, String accessToken) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
-        redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.getName(),accessToken);
-    }
 
     @Override
     public void logout(String uuid) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.MEMBER_ID.getName());
     }

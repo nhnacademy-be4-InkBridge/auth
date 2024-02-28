@@ -1,4 +1,4 @@
-package com.nhnacademy.inkbridge.auth.dto;
+package com.nhnacademy.inkbridge.auth.dto.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;

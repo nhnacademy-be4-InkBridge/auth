@@ -1,6 +1,5 @@
 package com.nhnacademy.inkbridge.auth.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.inkbridge.auth.filter.CustomAuthenticationFilter;
 import com.nhnacademy.inkbridge.auth.handler.JwtFailHandler;
 import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
@@ -33,7 +32,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final MetaDataProperties metaDataProperties;
     private final CustomUserDetailService customUserDetailService;
-    private final ObjectMapper objectMapper;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Bean
@@ -58,9 +56,10 @@ public class SecurityConfig {
     @Bean
     public CustomAuthenticationFilter customAuthenticationFilter(JwtProvider jwtProvider) throws Exception {
         CustomAuthenticationFilter customAuthenticationFilter =
-                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtProvider, objectMapper,redisTemplate);
+                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtProvider,redisTemplate);
         customAuthenticationFilter.setAuthenticationFailureHandler(failureHandler());
         customAuthenticationFilter.setAuthenticationManager(authenticationManager(null));
+        customAuthenticationFilter.setUsernameParameter("email");
         customAuthenticationFilter.setFilterProcessesUrl("/auth/login");
         return customAuthenticationFilter;
     }
