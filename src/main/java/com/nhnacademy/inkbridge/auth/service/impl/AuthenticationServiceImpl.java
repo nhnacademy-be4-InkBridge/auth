@@ -2,7 +2,6 @@ package com.nhnacademy.inkbridge.auth.service.impl;
 
 import com.nhnacademy.inkbridge.auth.service.AuthenticationService;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -17,33 +16,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     private final RedisTemplate<String, Object> redisTemplate;
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getId(String uuid) {
-        return Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.UUID.name())).toString();
-    }
 
-    /**
-     * {@inheritDoc}
-     * @param uuid 회원 식별 고유 아이디
-     * @param accessToken accessToken
-     */
     @Override
-    public void doReissue(String uuid, String accessToken) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.name());
-        redisTemplate.opsForHash().put(uuid, JWTEnums.ACCESS_TOKEN.name(), accessToken);
-    }
-
-    /**
-     * {@inheritDoc}
-     * @param uuid
-     */
-    @Override
-    public void doLogout(String uuid) {
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.ACCESS_TOKEN.name());
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.name());
-        redisTemplate.opsForHash().delete(uuid, JWTEnums.UUID.name());
+    public void logout(String uuid) {
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.MEMBER_ID.getName());
     }
 }

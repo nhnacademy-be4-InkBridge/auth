@@ -6,8 +6,8 @@ package com.nhnacademy.inkbridge.auth.exception;
  * @author devminseo
  * @version 2/26/24
  */
-public class ClientLoginException extends RuntimeException {
-    public ClientLoginException(String invalidLoginRequest) {
+public class AuthenticationMethodException extends RuntimeException {
+    public AuthenticationMethodException(String invalidLoginRequest) {
         super(invalidLoginRequest);
     }
 }

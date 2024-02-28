@@ -2,7 +2,6 @@ package com.nhnacademy.inkbridge.auth.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * class: JWTEnums.
@@ -12,12 +11,12 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @AllArgsConstructor
-@NoArgsConstructor
 public enum JWTEnums {
-    ACCESS_TOKEN,
-    REFRESH_TOKEN,
-    UUID,
-    HEADER_UUID,
-    HEADER_EXPIRED_TIME,
-    JWT
+    ACCESS_TOKEN("access_token"),
+    REFRESH_TOKEN("refresh_token"),
+    MEMBER_ID("member_id"),
+    HEADER_UUID("header_uuid"),
+    HEADER_AUTH("Authorization"),
+    HEADER_EXPIRED_TIME("header_expired_time");
+    private final String name;
 }

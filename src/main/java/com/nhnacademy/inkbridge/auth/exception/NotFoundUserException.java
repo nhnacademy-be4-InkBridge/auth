@@ -7,7 +7,8 @@ package com.nhnacademy.inkbridge.auth.exception;
  * @version 2/25/24
  */
 public class NotFoundUserException extends RuntimeException {
-    public NotFoundUserException(String msg) {
-        super(msg);
+    private static final String MSG = "회원을 찾을 수 없습니다.";
+    public NotFoundUserException() {
+        super(MSG);
     }
 }
