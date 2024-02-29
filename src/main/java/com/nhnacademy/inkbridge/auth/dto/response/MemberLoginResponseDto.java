@@ -3,6 +3,7 @@ package com.nhnacademy.inkbridge.auth.dto.response;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * class: MemberLoginResponseDto.
@@ -11,6 +12,7 @@ import lombok.Getter;
  * @version 2/22/24
  */
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class MemberLoginResponseDto {
     private Long memberId;
