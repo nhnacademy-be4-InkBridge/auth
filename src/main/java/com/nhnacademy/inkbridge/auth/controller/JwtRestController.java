@@ -45,7 +45,6 @@ public class JwtRestController {
         String accessToken = request.getHeader(ACCESS_HEADER);
         String refreshToken = request.getHeader(REFRESH_HEADER);
         String uuid = jwtProvider.getUUID(accessToken);
-        // TODO: 나중에 여기서 제발급한 accessToken 을 블랙리스트에 올려줘야하지 않을까?
 
         if (isValidHeaders(accessToken, uuid)) {
             return ResponseEntity.badRequest().body("헤더 정보가 올바르지 않습니다.");
@@ -62,7 +61,7 @@ public class JwtRestController {
         String newAccessToken = jwtProvider.reissueAccessToken(claims);
 
 
-        response.setHeader(ACCESS_HEADER, "Bearer" + newAccessToken);
+        response.setHeader(ACCESS_HEADER, "Bearer " + newAccessToken);
 
         return ResponseEntity.ok().build();
     }
@@ -99,7 +98,7 @@ public class JwtRestController {
     }
 
     private boolean isValidHeaders(String accessToken, String uuid) {
-        return Objects.isNull(accessToken) || Objects.isNull(uuid) || !accessToken.startsWith("Bearer") ||
+        return Objects.isNull(accessToken) || Objects.isNull(uuid) || !accessToken.startsWith("Bearer ") ||
                 !jwtProvider.isValidJwt(accessToken.substring(7));
     }
 

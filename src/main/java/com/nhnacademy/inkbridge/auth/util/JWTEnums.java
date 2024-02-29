@@ -17,6 +17,7 @@ public enum JWTEnums {
     MEMBER_ID("member_id"),
     HEADER_UUID("header_uuid"),
     HEADER_AUTH("Authorization"),
-    HEADER_EXPIRED_TIME("header_expired_time");
+    HEADER_ACCESS_EXPIRED_TIME("access_expired_time"),
+    HEADER_REFRESH_EXPIRED_TIME("refresh_expired_time");
     private final String name;
 }
