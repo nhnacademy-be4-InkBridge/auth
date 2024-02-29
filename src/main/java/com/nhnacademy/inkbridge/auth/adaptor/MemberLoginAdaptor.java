@@ -6,7 +6,6 @@ import com.nhnacademy.inkbridge.auth.dto.response.MemberLoginResponseDto;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -30,19 +29,24 @@ public class MemberLoginAdaptor {
 
     /**
      * api 서버로 로그인 요청하는 메서드.
+     *
      * @param requestDto 로그인 요청 정보
      * @return 로그인 성공후 회원 정보
      */
     public ResponseEntity<MemberLoginResponseDto> login(MemberLoginRequestDto requestDto) {
         log.info("MemberLoginAdaptor start ->");
 
-        return restTemplate.exchange(
-                metaDataProperties.getGateway() + "/api/member/login",
-//                "http://localhost:8080/api/member/login",
+        ResponseEntity<MemberLoginResponseDto> exchange = restTemplate.exchange(
+//                metaDataProperties.getGateway() + "/api/member/login",
+                "http://localhost:8060/api/member/login",
                 HttpMethod.POST,
                 new HttpEntity<>(requestDto, createHttpHeaders()),
-                new ParameterizedTypeReference<>() {}
+                MemberLoginResponseDto.class
         );
+        log.info("exchange -> {}", exchange.getBody().getMemberId());
+
+        return exchange;
+
     }
 
     private HttpHeaders createHttpHeaders() {

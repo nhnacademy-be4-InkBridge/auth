@@ -1,5 +1,6 @@
 package com.nhnacademy.inkbridge.auth.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhnacademy.inkbridge.auth.filter.CustomAuthenticationFilter;
 import com.nhnacademy.inkbridge.auth.handler.JwtFailHandler;
 import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
@@ -33,13 +34,14 @@ public class SecurityConfig {
     private final MetaDataProperties metaDataProperties;
     private final CustomUserDetailService customUserDetailService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf().disable();
-        http
-                .cors().disable();
+//        http
+//                .cors().disable();
         http
                 .formLogin().disable();
         http
@@ -56,7 +58,7 @@ public class SecurityConfig {
     @Bean
     public CustomAuthenticationFilter customAuthenticationFilter(JwtProvider jwtProvider) throws Exception {
         CustomAuthenticationFilter customAuthenticationFilter =
-                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtProvider,redisTemplate);
+                new CustomAuthenticationFilter(customAuthenticationProvider(), jwtProvider,redisTemplate,objectMapper);
         customAuthenticationFilter.setAuthenticationFailureHandler(failureHandler());
         customAuthenticationFilter.setAuthenticationManager(authenticationManager(null));
         customAuthenticationFilter.setUsernameParameter("email");

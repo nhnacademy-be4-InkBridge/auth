@@ -1,12 +1,16 @@
 package com.nhnacademy.inkbridge.auth.filter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhnacademy.inkbridge.auth.dto.request.AuthorizationRequestDto;
 import com.nhnacademy.inkbridge.auth.exception.ClientNotFoundException;
+import com.nhnacademy.inkbridge.auth.exception.NotFoundUserException;
 import com.nhnacademy.inkbridge.auth.provider.CustomAuthenticationProvider;
 import com.nhnacademy.inkbridge.auth.provider.JwtProvider;
 import com.nhnacademy.inkbridge.auth.util.Errors;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -37,6 +41,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final CustomAuthenticationProvider provider;
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
     private static final String ACCESS_HEADER = "Authorization-Access";
     private static final String REFRESH_HEADER = "Authorization-Refresh";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -53,24 +58,30 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
-        log.info("front 로부터 회원정보 받음 -> auth server start");
+        log.debug("front 로부터 회원정보 받음 -> auth server start");
 
-        String email = obtainUsername(request);
-        String password = obtainPassword(request);
+        AuthorizationRequestDto requestDto;
+        try {
+            requestDto = objectMapper.readValue(request.getInputStream(), AuthorizationRequestDto.class);
+        } catch (IOException e) {
+            throw new NotFoundUserException();
+        }
+        String email = requestDto.getEmail();
+        String password = requestDto.getPassword();
 
-        log.info("Attempt authentication email -> {}", email);
-        log.info("Attempt authentication password -> {}", password);
+        log.debug("Attempt authentication email -> {}", email);
+        log.debug("Attempt authentication password -> {}", password);
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(email, password);
-        log.info("-> auth attemptAuthentication Filter end");
+        log.debug("-> auth attemptAuthentication Filter end");
         return provider.authenticate(authenticationToken);
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
-        log.info("successfulAuthentication -> 인증 성공");
+        log.debug("successfulAuthentication -> 인증 성공");
 
         if (Objects.isNull(authResult)) {
             throw new ClientNotFoundException(Errors.MEMBER_NOT_FOUND);
@@ -78,16 +89,19 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String memberId = (String) authResult.getPrincipal();
         List<String> authorities = getAuthorities(authResult.getAuthorities());
 
-        log.info("memberId -> {}", memberId);
-        log.info("authorities -> {}", authorities.toString());
+        log.debug("memberId -> {}", memberId);
+        log.debug("authorities -> {}", authorities.toString());
 
         String uuid = UUID.randomUUID().toString();
 
         String accessToken = jwtProvider.createAccessToken(uuid, authorities);
+        Date accessExpiredTime = jwtProvider.getExpiredTime(accessToken);
         String refreshToken = jwtProvider.createRefreshToken(uuid, authorities);
+        Date refreshExpiredTime = jwtProvider.getExpiredTime(refreshToken);
 
-        log.info("accessToken -> {}",accessToken);
-        log.info("refreshToken -> {}",refreshToken);
+
+        log.debug("accessToken -> {}",accessToken);
+        log.debug("refreshToken -> {}",refreshToken);
 
         redisTemplate.opsForHash().put(uuid, JWTEnums.REFRESH_TOKEN.getName(), refreshToken);
         redisTemplate.expire(uuid, REFRESH_TOKEN_EXPIRED_TIME, TimeUnit.MILLISECONDS);
@@ -95,7 +109,9 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
 
         response.addHeader(ACCESS_HEADER, BEARER_PREFIX + accessToken);
+        response.addHeader(JWTEnums.HEADER_ACCESS_EXPIRED_TIME.getName(),String.valueOf(accessExpiredTime));
         response.addHeader(REFRESH_HEADER, BEARER_PREFIX + refreshToken);
+        response.addHeader(JWTEnums.HEADER_REFRESH_EXPIRED_TIME.getName(), String.valueOf(refreshExpiredTime));
     }
 
     @Override
