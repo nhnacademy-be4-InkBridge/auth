@@ -33,14 +33,11 @@ public class CustomUserDetailService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         ResponseEntity<MemberLoginResponseDto> response;
-            log.debug("loadUserByUsername start ->");
 
         try {
 
             response = memberLoginAdaptor.login(new MemberLoginRequestDto(email));
-            log.debug("DB에서 가져오는거 성공 ->");
             MemberLoginResponseDto responseDto = response.getBody();
-            log.debug("loadUserByUsername responseDto create ->");
 
             return new User(Objects.requireNonNull(responseDto).getMemberId().toString(), responseDto.getPassword(),
                     getAuthorities(responseDto));
