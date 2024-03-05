@@ -25,7 +25,6 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
         UserDetails user = this.getUserDetailsService().loadUserByUsername(email);
 
         if (!this.getPasswordEncoder().matches(password, user.getPassword())) {
-            log.debug("provider not matches");
             throw new ProviderNotMatchesException();
         }
 
