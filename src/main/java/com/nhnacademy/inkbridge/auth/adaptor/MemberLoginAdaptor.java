@@ -34,18 +34,12 @@ public class MemberLoginAdaptor {
      * @return 로그인 성공후 회원 정보
      */
     public ResponseEntity<MemberLoginResponseDto> login(MemberLoginRequestDto requestDto) {
-        log.info("MemberLoginAdaptor start ->");
-
-        ResponseEntity<MemberLoginResponseDto> exchange = restTemplate.exchange(
-//                metaDataProperties.getGateway() + "/api/member/login",
-                "http://localhost:8060/api/member/login",
+        return restTemplate.exchange(
+                metaDataProperties.getGateway() + "/api/members/login",
                 HttpMethod.POST,
                 new HttpEntity<>(requestDto, createHttpHeaders()),
                 MemberLoginResponseDto.class
         );
-        log.info("exchange -> {}", exchange.getBody().getMemberId());
-
-        return exchange;
 
     }
 

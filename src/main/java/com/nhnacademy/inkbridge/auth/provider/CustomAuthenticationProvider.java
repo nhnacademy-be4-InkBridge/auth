@@ -18,17 +18,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.info("-> provider start");
         String email = (String) authentication.getPrincipal();
         String password = (String) authentication.getCredentials();
 
-        log.info("email -> {}",email);
-        log.info("password -> {}",password);
 
         UserDetails user = this.getUserDetailsService().loadUserByUsername(email);
 
         if (!this.getPasswordEncoder().matches(password, user.getPassword())) {
-            log.debug("provider not matches");
             throw new ProviderNotMatchesException();
         }
 

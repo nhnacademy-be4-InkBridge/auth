@@ -24,7 +24,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class JwtProvider {
+    // 1시간
     private static final long ACCESS_TOKEN_EXPIRED_TIME = 1000L * 60 * 60;
+    // 1주일
     private static final long REFRESH_TOKEN_EXPIRED_TIME = 1000L * 60L * 60L * 24L * 7;
     private final UserDetailsService userDetailsService;
     private Key key;
@@ -69,9 +71,9 @@ public class JwtProvider {
     public Boolean isValidJwt(String token) {
         try {
             Jws<Claims> claimsJws = Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token);
-            return !claimsJws.getBody().getExpiration().before(new Date());
+            return claimsJws.getBody().getExpiration().before(new Date());
         } catch (Exception e) {
-            return false;
+            return true;
         }
     }
 

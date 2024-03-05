@@ -58,7 +58,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
-        log.debug("front 로부터 회원정보 받음 -> auth server start");
 
         AuthorizationRequestDto requestDto;
         try {
@@ -66,22 +65,15 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         } catch (IOException e) {
             throw new NotFoundUserException();
         }
-        String email = requestDto.getEmail();
-        String password = requestDto.getPassword();
-
-        log.debug("Attempt authentication email -> {}", email);
-        log.debug("Attempt authentication password -> {}", password);
 
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(email, password);
-        log.debug("-> auth attemptAuthentication Filter end");
+                new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
         return provider.authenticate(authenticationToken);
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
-        log.debug("successfulAuthentication -> 인증 성공");
 
         if (Objects.isNull(authResult)) {
             throw new ClientNotFoundException(Errors.MEMBER_NOT_FOUND);
@@ -89,8 +81,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String memberId = (String) authResult.getPrincipal();
         List<String> authorities = getAuthorities(authResult.getAuthorities());
 
-        log.debug("memberId -> {}", memberId);
-        log.debug("authorities -> {}", authorities.toString());
 
         String uuid = UUID.randomUUID().toString();
 
@@ -100,8 +90,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         Date refreshExpiredTime = jwtProvider.getExpiredTime(refreshToken);
 
 
-        log.debug("accessToken -> {}",accessToken);
-        log.debug("refreshToken -> {}",refreshToken);
 
         redisTemplate.opsForHash().put(uuid, JWTEnums.REFRESH_TOKEN.getName(), refreshToken);
         redisTemplate.expire(uuid, REFRESH_TOKEN_EXPIRED_TIME, TimeUnit.MILLISECONDS);
@@ -109,16 +97,11 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 
 
         response.addHeader(ACCESS_HEADER, BEARER_PREFIX + accessToken);
-        response.addHeader(JWTEnums.HEADER_ACCESS_EXPIRED_TIME.getName(),String.valueOf(accessExpiredTime));
+        response.addHeader(JWTEnums.HEADER_ACCESS_EXPIRED_TIME.getName(), String.valueOf(accessExpiredTime.getTime()));
         response.addHeader(REFRESH_HEADER, BEARER_PREFIX + refreshToken);
-        response.addHeader(JWTEnums.HEADER_REFRESH_EXPIRED_TIME.getName(), String.valueOf(refreshExpiredTime));
-    }
-
-    @Override
-    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                              AuthenticationException failed) throws IOException, ServletException {
-        log.debug("unsuccessfulAuthentication -> {}", failed.toString());
-        super.unsuccessfulAuthentication(request, response, failed);
+        response.addHeader(JWTEnums.HEADER_REFRESH_EXPIRED_TIME.getName(),
+                String.valueOf(refreshExpiredTime.getTime()));
+        response.addHeader(JWTEnums.HEADER_UUID.getName(), uuid);
     }
 
     private List<String> getAuthorities(Collection<? extends GrantedAuthority> authorities) {

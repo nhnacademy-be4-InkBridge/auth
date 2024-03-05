@@ -9,6 +9,7 @@ import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class JwtRestController {
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -42,13 +44,13 @@ public class JwtRestController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<String> reissueToken(HttpServletRequest request, HttpServletResponse response) {
-        String accessToken = request.getHeader(ACCESS_HEADER);
-        String refreshToken = request.getHeader(REFRESH_HEADER);
-        String uuid = jwtProvider.getUUID(accessToken);
-
-        if (isValidHeaders(accessToken, uuid)) {
+        String accessToken = request.getHeader(ACCESS_HEADER).substring(7);
+        String refreshToken = request.getHeader(REFRESH_HEADER).substring(7);
+        if (isValidHeaders(request.getHeader(ACCESS_HEADER), request.getHeader(REFRESH_HEADER))) {
             return ResponseEntity.badRequest().body("헤더 정보가 올바르지 않습니다.");
         }
+        String uuid = jwtProvider.getUUID(refreshToken);
+
 
         if (isNotValidKey(uuid)) {
             return ResponseEntity.badRequest().body("존재하지 않는 회원입니다.");
@@ -57,11 +59,14 @@ public class JwtRestController {
             return ResponseEntity.badRequest().body("refresh token 만료");
         }
 
-        Claims claims = jwtProvider.getClaims(accessToken);
+        Claims claims = jwtProvider.getClaims(refreshToken);
         String newAccessToken = jwtProvider.reissueAccessToken(claims);
+        Date accessExpiredTime = jwtProvider.getExpiredTime(newAccessToken);
 
 
         response.setHeader(ACCESS_HEADER, "Bearer " + newAccessToken);
+        response.setHeader(JWTEnums.HEADER_ACCESS_EXPIRED_TIME.getName(), String.valueOf(accessExpiredTime.getTime()));
+
 
         return ResponseEntity.ok().build();
     }
@@ -83,23 +88,19 @@ public class JwtRestController {
      * @return 결과 값
      */
     private boolean isValidRefreshToken(String uuid,String refreshToken) {
-
         String redisRefreshToken =
                 Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.REFRESH_TOKEN.getName()))
                         .toString();
         if (!Objects.equals(refreshToken, redisRefreshToken)) {
-            return false;
+            return true;
         }
 
-        long expiredTime = jwtProvider.getExpiredTime(redisRefreshToken).getTime();
-        long now = new Date().getTime();
-
-        return (expiredTime - (now / 1000)) > 0;
+        return jwtProvider.isValidJwt(refreshToken);
     }
 
-    private boolean isValidHeaders(String accessToken, String uuid) {
-        return Objects.isNull(accessToken) || Objects.isNull(uuid) || !accessToken.startsWith("Bearer ") ||
-                !jwtProvider.isValidJwt(accessToken.substring(7));
+    private boolean isValidHeaders(String accessToken,String refreshToken) {
+        return Objects.isNull(accessToken) || !accessToken.startsWith("Bearer ") || Objects.isNull(refreshToken) ||
+                !refreshToken.startsWith("Bearer ");
     }
 
     @GetMapping("/logout")
