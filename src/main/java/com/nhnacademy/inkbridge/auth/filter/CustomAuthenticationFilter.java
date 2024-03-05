@@ -65,12 +65,9 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         } catch (IOException e) {
             throw new NotFoundUserException();
         }
-        String email = requestDto.getEmail();
-        String password = requestDto.getPassword();
-
 
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(email, password);
+                new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
         return provider.authenticate(authenticationToken);
     }
 
@@ -105,12 +102,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         response.addHeader(JWTEnums.HEADER_REFRESH_EXPIRED_TIME.getName(),
                 String.valueOf(refreshExpiredTime.getTime()));
         response.addHeader(JWTEnums.HEADER_UUID.getName(), uuid);
-    }
-
-    @Override
-    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                              AuthenticationException failed) throws IOException, ServletException {
-        super.unsuccessfulAuthentication(request, response, failed);
     }
 
     private List<String> getAuthorities(Collection<? extends GrantedAuthority> authorities) {
