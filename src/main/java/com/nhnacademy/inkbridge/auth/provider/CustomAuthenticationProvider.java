@@ -1,7 +1,7 @@
 package com.nhnacademy.inkbridge.auth.provider;
 
-import com.nhnacademy.inkbridge.auth.exception.ProviderNotMatchesException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -25,7 +25,7 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
         UserDetails user = this.getUserDetailsService().loadUserByUsername(email);
 
         if (!this.getPasswordEncoder().matches(password, user.getPassword())) {
-            throw new ProviderNotMatchesException();
+            throw new ProviderNotFoundException("비밀번호가 일치하지 않습니다.");
         }
 
 
