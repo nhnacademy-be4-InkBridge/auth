@@ -34,6 +34,7 @@ public class MemberLoginAdaptor {
      * @return 로그인 성공후 회원 정보
      */
     public ResponseEntity<MemberLoginResponseDto> login(MemberLoginRequestDto requestDto) {
+        log.info("gateway url -> {}",metaDataProperties.getGateway());
         return restTemplate.exchange(
                 metaDataProperties.getGateway() + "/api/members/login",
                 HttpMethod.POST,

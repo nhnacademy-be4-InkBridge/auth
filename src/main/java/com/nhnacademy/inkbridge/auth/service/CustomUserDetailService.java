@@ -35,9 +35,11 @@ public class CustomUserDetailService implements UserDetailsService {
         ResponseEntity<MemberLoginResponseDto> response;
 
         try {
-
+            log.info("userDetail start ->");
             response = memberLoginAdaptor.login(new MemberLoginRequestDto(email));
             MemberLoginResponseDto responseDto = response.getBody();
+
+            log.info("userDetail end ->");
 
             return new User(Objects.requireNonNull(responseDto).getMemberId().toString(), responseDto.getPassword(),
                     getAuthorities(responseDto));
