@@ -1,9 +1,8 @@
-package com.nhnacademy.inkbridge.auth.service.impl;
+package com.nhnacademy.inkbridge.auth.service;
 
 import com.nhnacademy.inkbridge.auth.adaptor.MemberLoginAdaptor;
 import com.nhnacademy.inkbridge.auth.dto.request.MemberLoginRequestDto;
 import com.nhnacademy.inkbridge.auth.dto.response.MemberLoginResponseDto;
-import com.nhnacademy.inkbridge.auth.exception.NotFoundUserException;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -17,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 /**
  * class: CustomUserDetailService.
@@ -34,6 +34,7 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         ResponseEntity<MemberLoginResponseDto> response;
 
+
         try {
             log.info("userDetail start ->");
             response = memberLoginAdaptor.login(new MemberLoginRequestDto(email));
@@ -44,8 +45,9 @@ public class CustomUserDetailService implements UserDetailsService {
             return new User(Objects.requireNonNull(responseDto).getMemberId().toString(), responseDto.getPassword(),
                     getAuthorities(responseDto));
 
-        } catch (Exception e) {
-            throw new NotFoundUserException();
+        } catch (HttpClientErrorException e) {
+            log.error("회원을 찾을 수 없습니다.");
+            throw new UsernameNotFoundException("회원을 찾을 수 없습니다.");
         }
     }
 
