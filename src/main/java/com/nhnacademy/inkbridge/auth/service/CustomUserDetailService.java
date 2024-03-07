@@ -34,6 +34,7 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         ResponseEntity<MemberLoginResponseDto> response;
 
+
         try {
             log.info("userDetail start ->");
             response = memberLoginAdaptor.login(new MemberLoginRequestDto(email));
