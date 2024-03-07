@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -42,6 +44,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private static final String FRONT = "https://www.inkbridge.store";
     private static final String ACCESS_HEADER = "Authorization-Access";
     private static final String REFRESH_HEADER = "Authorization-Refresh";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -102,10 +105,17 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         response.addHeader(JWTEnums.HEADER_REFRESH_EXPIRED_TIME.getName(),
                 String.valueOf(refreshExpiredTime.getTime()));
         response.addHeader(JWTEnums.HEADER_UUID.getName(), uuid);
+        log.info("발급 완료");
     }
 
     private List<String> getAuthorities(Collection<? extends GrantedAuthority> authorities) {
         return authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
     }
 
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+                                              AuthenticationException failed) throws IOException, ServletException {
+        log.info("unsuccessful ->");
+        response.addHeader(HttpHeaders.ALLOW, HttpStatus.UNAUTHORIZED.toString());
+    }
 }

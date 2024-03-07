@@ -1,7 +1,6 @@
 package com.nhnacademy.inkbridge.auth.controller;
 
 import com.nhnacademy.inkbridge.auth.provider.JwtProvider;
-import com.nhnacademy.inkbridge.auth.service.AuthenticationService;
 import com.nhnacademy.inkbridge.auth.util.JWTEnums;
 import io.jsonwebtoken.Claims;
 import java.util.Date;
@@ -31,9 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class JwtRestController {
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final AuthenticationService authenticationService;
     private static final String ACCESS_HEADER = "Authorization-Access";
     private static final String REFRESH_HEADER = "Authorization-Refresh";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     /**
      * 만료된 access 토큰을 refresh 토큰 인증을 통해 재발급
@@ -44,6 +43,7 @@ public class JwtRestController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<String> reissueToken(HttpServletRequest request, HttpServletResponse response) {
+        // access는 블랙리스트 처리, refresh도 잘못됐다면 블랙리스트 처리
         String accessToken = request.getHeader(ACCESS_HEADER).substring(7);
         String refreshToken = request.getHeader(REFRESH_HEADER).substring(7);
         if (isValidHeaders(request.getHeader(ACCESS_HEADER), request.getHeader(REFRESH_HEADER))) {
@@ -55,7 +55,7 @@ public class JwtRestController {
         if (isNotValidKey(uuid)) {
             return ResponseEntity.badRequest().body("존재하지 않는 회원입니다.");
         }
-        if (isValidRefreshToken(uuid,refreshToken)) {
+        if (isValidRefreshToken(uuid, refreshToken)) {
             return ResponseEntity.badRequest().body("refresh token 만료");
         }
 
@@ -64,7 +64,7 @@ public class JwtRestController {
         Date accessExpiredTime = jwtProvider.getExpiredTime(newAccessToken);
 
 
-        response.setHeader(ACCESS_HEADER, "Bearer " + newAccessToken);
+        response.setHeader(ACCESS_HEADER, BEARER_PREFIX + newAccessToken);
         response.setHeader(JWTEnums.HEADER_ACCESS_EXPIRED_TIME.getName(), String.valueOf(accessExpiredTime.getTime()));
 
 
@@ -87,7 +87,7 @@ public class JwtRestController {
      * @param uuid 전달받은 키
      * @return 결과 값
      */
-    private boolean isValidRefreshToken(String uuid,String refreshToken) {
+    private boolean isValidRefreshToken(String uuid, String refreshToken) {
         String redisRefreshToken =
                 Objects.requireNonNull(redisTemplate.opsForHash().get(uuid, JWTEnums.REFRESH_TOKEN.getName()))
                         .toString();
@@ -98,14 +98,21 @@ public class JwtRestController {
         return jwtProvider.isValidJwt(refreshToken);
     }
 
-    private boolean isValidHeaders(String accessToken,String refreshToken) {
-        return Objects.isNull(accessToken) || !accessToken.startsWith("Bearer ") || Objects.isNull(refreshToken) ||
-                !refreshToken.startsWith("Bearer ");
+    private boolean isValidHeaders(String accessToken, String refreshToken) {
+        return Objects.isNull(accessToken) || !accessToken.startsWith(BEARER_PREFIX) || Objects.isNull(refreshToken) ||
+                !refreshToken.startsWith(BEARER_PREFIX);
     }
 
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
+        // 둘다 블랙리스트 추가
+        String accessToken = request.getHeader(ACCESS_HEADER).substring(7);
+        String refreshToken = request.getHeader(REFRESH_HEADER).substring(7);
 
+        String uuid = jwtProvider.getUUID(refreshToken);
+
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
+        redisTemplate.opsForHash().delete(uuid, JWTEnums.MEMBER_ID.getName());
         return ResponseEntity.ok().build();
     }
 
