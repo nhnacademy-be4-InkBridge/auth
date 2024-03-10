@@ -21,6 +21,6 @@ public class JwtFailHandler implements AuthenticationFailureHandler {
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
-        response.sendRedirect(metaDataProperties.getFront()+"/login");
+        response.sendRedirect(metaDataProperties.getFront()+"/");
     }
 }

@@ -44,7 +44,6 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
-    private static final String FRONT = "https://www.inkbridge.store";
     private static final String ACCESS_HEADER = "Authorization-Access";
     private static final String REFRESH_HEADER = "Authorization-Refresh";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -74,6 +73,16 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         return provider.authenticate(authenticationToken);
     }
 
+    /**
+     * 인증 성공시 실행 메서드.
+     *
+     * @param request request
+     * @param response response
+     * @param chain chain
+     * @param authResult 인증 결과
+     * @throws IOException IOException
+     * @throws ServletException ServletException
+     */
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
@@ -112,6 +121,15 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         return authorities.stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
     }
 
+    /**
+     * 인증 실패시 실행되는 메서드.
+     *
+     * @param request request
+     * @param response response
+     * @param failed failed
+     * @throws IOException IOException
+     * @throws ServletException ServletException
+     */
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
