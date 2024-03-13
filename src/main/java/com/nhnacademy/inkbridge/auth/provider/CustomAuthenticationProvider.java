@@ -24,13 +24,20 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
 
         UserDetails user = this.getUserDetailsService().loadUserByUsername(email);
 
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(user.getUsername(),
+                        "",
+                        user.getAuthorities());
+
+        if ("[ROLE_SOCIAL]".equals(user.getAuthorities().toString())) {
+            return authenticationToken;
+        }
+
         if (!this.getPasswordEncoder().matches(password, user.getPassword())) {
             throw new ProviderNotFoundException("비밀번호가 일치하지 않습니다.");
         }
 
 
-        return new UsernamePasswordAuthenticationToken(user.getUsername(),
-                "",
-                user.getAuthorities());
+        return authenticationToken;
     }
 }
