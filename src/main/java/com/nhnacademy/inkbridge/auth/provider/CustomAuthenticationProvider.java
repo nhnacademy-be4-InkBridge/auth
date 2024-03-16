@@ -29,7 +29,7 @@ public class CustomAuthenticationProvider extends DaoAuthenticationProvider {
                         "",
                         user.getAuthorities());
 
-        if ("[ROLE_SOCIAL]".equals(user.getAuthorities().toString())) {
+        if ("[ROLE_SOCIAL]".equals(user.getAuthorities().toString()) && password.equals(user.getPassword())) {
             return authenticationToken;
         }
 
