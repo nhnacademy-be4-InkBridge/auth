@@ -5,6 +5,7 @@ import com.nhnacademy.inkbridge.auth.util.JWTEnums;
 import io.jsonwebtoken.Claims;
 import java.util.Date;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class JwtRestController {
     private static final String ACCESS_HEADER = "Authorization-Access";
     private static final String REFRESH_HEADER = "Authorization-Refresh";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String BLACK_LIST = "black-list";
 
     /**
      * 만료된 access 토큰을 refresh 토큰 인증을 통해 재발급
@@ -43,8 +45,6 @@ public class JwtRestController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<String> reissueToken(HttpServletRequest request, HttpServletResponse response) {
-        // access는 블랙리스트 처리, refresh도 잘못됐다면 블랙리스트 처리
-        String accessToken = request.getHeader(ACCESS_HEADER).substring(7);
         String refreshToken = request.getHeader(REFRESH_HEADER).substring(7);
         if (isValidHeaders(request.getHeader(ACCESS_HEADER), request.getHeader(REFRESH_HEADER))) {
             return ResponseEntity.badRequest().body("헤더 정보가 올바르지 않습니다.");
@@ -105,12 +105,15 @@ public class JwtRestController {
 
     @GetMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
-        // 둘다 블랙리스트 추가
+        // access 블랙리스트 추가
         String accessToken = request.getHeader(ACCESS_HEADER).substring(7);
         String refreshToken = request.getHeader(REFRESH_HEADER).substring(7);
 
         String uuid = jwtProvider.getUUID(refreshToken);
+        long exp = jwtProvider.getExpiredTime(accessToken).getTime();
 
+        redisTemplate.opsForHash().put(BLACK_LIST, accessToken, "");
+        redisTemplate.expire(accessToken, exp, TimeUnit.MILLISECONDS);
         redisTemplate.opsForHash().delete(uuid, JWTEnums.REFRESH_TOKEN.getName());
         redisTemplate.opsForHash().delete(uuid, JWTEnums.MEMBER_ID.getName());
         return ResponseEntity.ok().build();
