@@ -1,8 +1,9 @@
 package com.nhnacademy.inkbridge.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.BeanClassLoaderAware;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -23,14 +24,13 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
  */
 @EnableRedisHttpSession(redisNamespace = "redis:session")
 @Configuration
+@RequiredArgsConstructor
+@ConfigurationProperties(prefix = "inkbridge.redis")
 public class RedisConfig implements BeanClassLoaderAware {
-    @Value("${inkbridge.redis.host}")
+    private final KeyMangerConfig keyMangerConfig;
     private String host;
-    @Value("${inkbridge.redis.port}")
     private String port;
-    @Value("${inkbridge.redis.password}")
     private String password;
-    @Value("${inkbridge.redis.database}")
     private String database;
     private ClassLoader classLoader;
 
@@ -42,10 +42,10 @@ public class RedisConfig implements BeanClassLoaderAware {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
-        configuration.setHostName(host);
-        configuration.setPort(Integer.parseInt(port));
-        configuration.setPassword(password);
-        configuration.setDatabase(Integer.parseInt(database));
+        configuration.setHostName(keyMangerConfig.keyStore(host));
+        configuration.setPort(Integer.parseInt(keyMangerConfig.keyStore(port)));
+        configuration.setPassword(keyMangerConfig.keyStore(password));
+        configuration.setDatabase(Integer.parseInt(keyMangerConfig.keyStore(database)));
 
         return new LettuceConnectionFactory(configuration);
     }
@@ -83,5 +83,37 @@ public class RedisConfig implements BeanClassLoaderAware {
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
         this.classLoader = classLoader;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public void setPort(String port) {
+        this.port = port;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public void setDatabase(String database) {
+        this.database = database;
     }
 }
