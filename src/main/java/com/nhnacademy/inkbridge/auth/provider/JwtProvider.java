@@ -1,5 +1,6 @@
 package com.nhnacademy.inkbridge.auth.provider;
 
+import com.nhnacademy.inkbridge.auth.config.KeyMangerConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -10,7 +11,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,17 +23,18 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@ConfigurationProperties(prefix = "inkbridge.jwt")
 public class JwtProvider {
+    private final KeyMangerConfig keyMangerConfig;
     // 15분
     private static final long ACCESS_TOKEN_EXPIRED_TIME = 1000L * 60 * 30;
 
     // 1주일
     private static final long REFRESH_TOKEN_EXPIRED_TIME = 1000L * 60L * 60L * 24L * 7;
-    @Value("${inkbridge.jwt.secret.key}")
     String secretKey;
 
     private Key key() {
-        byte[] byteSecretKey = Decoders.BASE64.decode(secretKey);
+        byte[] byteSecretKey = Decoders.BASE64.decode(keyMangerConfig.keyStore(secretKey));
         return Keys.hmacShaKeyFor(byteSecretKey);
     }
 
@@ -143,4 +145,11 @@ public class JwtProvider {
                 .getBody();
     }
 
+    public String getSecretKey() {
+        return secretKey;
+    }
+
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
 }
